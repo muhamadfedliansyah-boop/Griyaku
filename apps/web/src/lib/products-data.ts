@@ -198,6 +198,14 @@ export const INITIAL_PRODUCTS: ProductItem[] = [
   },
 ];
 
+export const DEFAULT_PRODUCT: ProductItem = INITIAL_PRODUCTS[0]!;
+
+export function getProductById(id: number): ProductItem {
+  const found = INITIAL_PRODUCTS.find((p) => p.id === id);
+  if (found) return found;
+  return DEFAULT_PRODUCT;
+}
+
 export function formatRupiah(amount: number): string {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",

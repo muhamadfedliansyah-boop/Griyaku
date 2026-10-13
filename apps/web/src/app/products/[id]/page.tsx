@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { INITIAL_PRODUCTS, formatRupiah } from "@/lib/products-data";
+import { INITIAL_PRODUCTS, getProductById, formatRupiah } from "@/lib/products-data";
 import { 
   Star, CheckCircle2, ShieldCheck, Truck, RefreshCw, 
   Heart, Share2, Plus, Minus, ShoppingBag, ArrowLeft 
@@ -15,8 +15,9 @@ import { Button } from "@/components/ui/button";
 export default function ProductDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const productId = Number(params.id) || 1;
-  const product = INITIAL_PRODUCTS.find((p) => p.id === productId) || INITIAL_PRODUCTS[0];
+  const rawId = Array.isArray(params.id) ? params.id[0] : params.id;
+  const productId = Number(rawId) || 1;
+  const product = getProductById(productId);
 
   const [selectedImage, setSelectedImage] = useState<string>(product.imageUrl);
   const [quantity, setQuantity] = useState<number>(1);
@@ -211,7 +212,11 @@ export default function ProductDetailPage() {
                     <div className="p-3 bg-paper rounded-xl border border-line text-xs">
                       <div className="flex items-center justify-between font-bold text-ink-900">
                         <span>Farhan D. (Pembeli Terverifikasi)</span>
-                        <span className="text-sun-500">★★★★★</span>
+                        <div className="flex text-sun-500 gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star key={i} className="w-3.5 h-3.5 fill-sun-500" />
+                          ))}
+                        </div>
                       </div>
                       <p className="text-ink-500 mt-1">
                         Kualitas sangat bagus, sesuai deskripsi dan pengiriman cepat. Sangat membantu memasak tanpa minyak!

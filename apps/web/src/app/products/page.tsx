@@ -1,14 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { ProductCard } from "@/components/product/product-card";
 import { INITIAL_PRODUCTS } from "@/lib/products-data";
 import { SlidersHorizontal, Check, Star } from "lucide-react";
 
-export default function ProductsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+function ProductsCatalog() {
+  const searchParams = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    searchParams.get("category") ?? "all"
+  );
+
+  // Sync filter jika URL query param berubah (navigasi dari halaman lain)
+  useEffect(() => {
+    const cat = searchParams.get("category");
+    setSelectedCategory(cat ?? "all");
+  }, [searchParams]);
   const [onlyOfficial, setOnlyOfficial] = useState(false);
   const [onlyFreeShipping, setOnlyFreeShipping] = useState(false);
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc" | "sales">("featured");
@@ -98,11 +108,11 @@ export default function ProductsPage() {
               <h3 className="font-semibold text-sm text-ink-900 mb-3">Kategori</h3>
               <div className="space-y-1.5">
                 {[
-                  { slug: "all", label: "Semua Kategori" },
-                  { slug: "dapur-memasak", label: "🍳 Dapur & Memasak" },
-                  { slug: "kebersihan-rumah", label: "🧹 Kebersihan Rumah" },
-                  { slug: "elektronik-rumah", label: "⚡ Elektronik Rumah" },
-                  { slug: "perabot-dekorasi", label: "🛋️ Perabot & Dekorasi" },
+                  { slug: "all", label: "Semua Kategori", icon: null },
+                  { slug: "dapur-memasak", label: "Dapur & Memasak", icon: "utensils" },
+                  { slug: "kebersihan-rumah", label: "Kebersihan Rumah", icon: "sparkles" },
+                  { slug: "elektronik-rumah", label: "Elektronik Rumah", icon: "zap" },
+                  { slug: "perabot-dekorasi", label: "Perabot & Dekorasi", icon: "armchair" },
                 ].map((cat) => (
                   <button
                     key={cat.slug}
@@ -171,7 +181,9 @@ export default function ProductsPage() {
           <div className="lg:col-span-3">
             {filteredProducts.length === 0 ? (
               <div className="bg-paper p-12 rounded-[28px] border border-line text-center space-y-3">
-                <p className="text-4xl">🔍</p>
+                <div className="w-12 h-12 bg-brand-50 rounded-full flex items-center justify-center mx-auto text-brand-500 border border-brand-200">
+                  <SlidersHorizontal className="w-6 h-6" />
+                </div>
                 <h3 className="font-bold text-lg text-ink-900">Produk Tidak Ditemukan</h3>
                 <p className="text-sm text-ink-500 max-w-md mx-auto">
                   Coba ubah kata kunci atau hapus beberapa filter pencarian untuk melihat produk lainnya.
@@ -190,5 +202,19 @@ export default function ProductsPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-canvas flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <ProductsCatalog />
+    </Suspense>
   );
 }

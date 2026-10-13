@@ -13,7 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={`${bricolage.variable} ${jakarta.variable}`}>
+    <html
+      lang="id"
+      className={`${bricolage.variable} ${jakarta.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -23,9 +27,6 @@ export default function RootLayout({
                   document.documentElement.classList.add("motion-ok");
                 }
               } catch (_) {}
-              setTimeout(function() {
-                document.documentElement.classList.remove("motion-ok");
-              }, 2500);
             `,
           }}
         />

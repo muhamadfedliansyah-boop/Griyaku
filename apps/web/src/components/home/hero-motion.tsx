@@ -9,7 +9,13 @@ if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, ScrollTrigger);
 }
 
-export function HeroMotion({ children }: { children: ReactNode }) {
+export function HeroMotion({
+  children,
+  className = "w-full flex-1 flex flex-col justify-between",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   const root = useRef<HTMLDivElement>(null);
 
   useGSAP(
@@ -77,5 +83,9 @@ export function HeroMotion({ children }: { children: ReactNode }) {
     { scope: root }
   );
 
-  return <div ref={root}>{children}</div>;
+  return (
+    <div ref={root} className={className}>
+      {children}
+    </div>
+  );
 }

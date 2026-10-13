@@ -37,7 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
               e.preventDefault();
               e.stopPropagation();
             }}
-            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/80 backdrop-blur-xs flex items-center justify-center text-ink-500 hover:text-coral-600 hover:bg-white transition-colors cursor-pointer"
+            className="absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full bg-white/80 backdrop-blur-xs flex items-center justify-center text-ink-500 hover:text-coral-600 hover:bg-white transition-colors cursor-pointer"
           >
             <Heart className="w-4 h-4" />
           </button>

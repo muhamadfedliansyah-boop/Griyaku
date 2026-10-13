@@ -72,12 +72,10 @@ export function Navbar({ cartCount = 3 }: NavbarProps) {
             )}
           </Link>
 
-          {/* User Button */}
-          <Link href="/products">
-            <Button variant="primary" className="text-xs sm:text-sm py-2 px-4 sm:px-5">
-              Belanja
-            </Button>
-          </Link>
+          {/* User Login Button */}
+          <Button href="/login" variant="primary" className="text-xs sm:text-sm py-2 px-4 sm:px-5">
+            Masuk
+          </Button>
         </div>
       </div>
     </header>

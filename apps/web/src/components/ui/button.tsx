@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 type ButtonVariant = "cta" | "primary" | "outline" | "ghost" | "danger";
 
@@ -6,12 +7,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   children: React.ReactNode;
   className?: string;
+  href?: string;
 }
 
 export function Button({
   variant = "primary",
   children,
   className = "",
+  href,
+  type = "button",
   ...props
 }: ButtonProps) {
   let variantStyles = "";
@@ -39,9 +43,20 @@ export function Button({
       break;
   }
 
+  const combinedClass = `inline-flex items-center justify-center rounded-full px-6 py-3 transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles} ${className}`;
+
+  if (href) {
+    return (
+      <Link href={href} className={combinedClass}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
     <button
-      className={`inline-flex items-center justify-center rounded-full px-6 py-3 transition-all duration-200 active:scale-[0.98] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${variantStyles} ${className}`}
+      type={type}
+      className={combinedClass}
       {...props}
     >
       {children}
