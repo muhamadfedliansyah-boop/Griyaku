@@ -1,0 +1,43 @@
+# Node & pnpm
+node_modules/
+.pnpm-store/
+dist/
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# Environment & Rahasia
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+*.key
+
+# Go
+services/gateway/bin/
+*.exe
+*.test
+
+# Java & Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+target/
+
+# Android
+.idea/
+*.iml
+.gradle/
+local.properties
+.cxx/
+
+# Observability & Log
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

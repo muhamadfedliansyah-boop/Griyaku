@@ -1,0 +1,244 @@
+openapi: 3.1.0
+info:
+  title: Griyaku API
+  description: Kontrak resmi API Griyaku (Marketplace Alat Rumah Tangga). Seluruh komunikasi klien dan Gateway mengacu pada kontrak ini.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local API Gateway
+
+paths:
+  /healthz:
+    get:
+      summary: Liveness Probe
+      operationId: getLiveness
+      responses:
+        '200':
+          description: Gateway sehat dan beroperasi
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /readyz:
+    get:
+      summary: Readiness Probe
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Gateway siap menerima trafik upstream
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ready"
+                  upstream:
+                    type: string
+                    example: "connected"
+
+  /ping:
+    get:
+      summary: End-to-end Connectivity Probe
+      description: Memverifikasi koneksi Web -> Gateway -> Core API -> Database.
+      operationId: getPing
+      responses:
+        '200':
+          description: Hasil konektivitas end-to-end
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PingResponse'
+        '500':
+          description: Terjadi kegagalan koneksi internal
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /auth/register:
+    post:
+      summary: Pendaftaran Pengguna Baru (Stub)
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Pengguna berhasil terdaftar
+        '400':
+          description: Permintaan tidak valid
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /auth/login:
+    post:
+      summary: Masuk Akun Pengguna (Stub)
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Berhasil masuk
+        '401':
+          description: Kredensial salah
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ProblemDetail'
+
+  /products:
+    get:
+      summary: Daftar Produk Katalog (Stub)
+      operationId: listProducts
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 24
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Daftar produk
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        price:
+                          $ref: '#/components/schemas/Money'
+                  pagination:
+                    $ref: '#/components/schemas/CursorPagination'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token akses JWT ES256/RS256 untuk klien mobile/API.
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: griyaku_access_token
+      description: Cookie httpOnly yang diset oleh Gateway BFF untuk Web.
+
+  schemas:
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: integer
+          description: Jumlah nominal uang dalam satuan terkecil (Rupiah utuh, tanpa sen).
+          example: 349000
+        currency:
+          type: string
+          description: Kode mata uang ISO 4217.
+          example: "IDR"
+
+    CursorPagination:
+      type: object
+      properties:
+        nextCursor:
+          type: string
+          nullable: true
+          example: "eyJpZCI6MTB9"
+        hasMore:
+          type: boolean
+          example: true
+
+    ProblemDetail:
+      type: object
+      description: Standar pelaporan kesalahan RFC 9457
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          example: "https://api.griyaku.id/errors/not-found"
+        title:
+          type: string
+          example: "Data tidak ditemukan"
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: "Produk dengan slug tersebut tidak tersedia."
+        instance:
+          type: string
+          example: "/api/v1/products/panci-premium"
+        traceId:
+          type: string
+          example: "trace-9a8f2c3d4e"
+
+    PingResponse:
+      type: object
+      required: [status, service, gateway, database, timestamp]
+      properties:
+        status:
+          type: string
+          example: "ok"
+        service:
+          type: string
+          example: "griyaku-core-api"
+        gateway:
+          type: string
+          example: "griyaku-gateway-go"
+        database:
+          type: string
+          example: "PostgreSQL 16.3"
+        timestamp:
+          type: string
+          format: date-time

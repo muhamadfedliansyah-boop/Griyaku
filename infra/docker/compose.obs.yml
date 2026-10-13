@@ -1,0 +1,37 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.108.0
+    container_name: griyaku-otel-collector
+    restart: unless-stopped
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+    networks:
+      - griyaku-net
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: griyaku-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    networks:
+      - griyaku-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: griyaku-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    networks:
+      - griyaku-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: griyaku-jaeger
+    restart: unless-stopped
+    ports:
+      - "16686:16686" # Web UI
+    networks:
+      - griyaku-net

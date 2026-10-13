@@ -1,0 +1,55 @@
+services:
+  gateway:
+    build:
+      context: ../../services/gateway
+      dockerfile: Dockerfile
+    container_name: griyaku-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      UPSTREAM_CORE_URL: http://core-api:8081
+      REDIS_URL: redis://redis:6379
+      ALLOWED_ORIGINS: http://localhost:3000
+      GATEWAY_INTERNAL_SECRET: ${GATEWAY_INTERNAL_SECRET:-griyaku_gateway_internal_secret_key_32chars}
+    depends_on:
+      - redis
+    networks:
+      - griyaku-net
+
+  core-api:
+    build:
+      context: ../../services/core-api
+      dockerfile: Dockerfile
+    container_name: griyaku-core-api
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-griyaku}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-griyaku}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-griyaku_secret}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - griyaku-net
+
+  web:
+    build:
+      context: ../../apps/web
+      dockerfile: Dockerfile
+    container_name: griyaku-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api/v1
+    depends_on:
+      - gateway
+    networks:
+      - griyaku-net

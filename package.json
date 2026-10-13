@@ -1,0 +1,23 @@
+{
+  "name": "griyaku-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "lint:web": "pnpm --filter web lint",
+    "test:web": "pnpm --filter web test:run",
+    "lint:contracts": "npx @stoplight/spectral-cli lint contracts/openapi.yaml"
+  },
+  "packageManager": "pnpm@12.11.2",
+  "devDependencies": {
+    "@stoplight/spectral-cli": "^6.14.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@scarf/scarf",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}

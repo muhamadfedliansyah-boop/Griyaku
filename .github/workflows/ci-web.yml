@@ -1,0 +1,29 @@
+name: CI Web
+
+on:
+  push:
+    paths:
+      - "apps/web/**"
+      - "contracts/**"
+      - ".github/workflows/ci-web.yml"
+  pull_request:
+    paths:
+      - "apps/web/**"
+      - "contracts/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+      - run: pnpm install
+      - run: pnpm --filter web typecheck
+      - run: pnpm --filter web test:run
+      - run: pnpm --filter web build

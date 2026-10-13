@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand: hijau #006A4E sebagai brand-500 */
+  --color-brand-50:  #F0F6F4;
+  --color-brand-100: #DBEAE6;
+  --color-brand-200: #B8D5CD;
+  --color-brand-300: #85B7AA;
+  --color-brand-400: #4C9783;
+  --color-brand-500: #006A4E;
+  --color-brand-600: #005B43;
+  --color-brand-700: #004A37;
+  --color-brand-800: #003527;
+  --color-brand-900: #00241B;
+  --color-brand-950: #001510;
+
+  /* Mint: kartu terang, padanan "periwinkle" di foto 1 */
+  --color-mint-100: #E3F6EF;
+  --color-mint-200: #BFEBDD;
+  --color-mint-300: #8FDCC1;
+
+  /* Aksen hangat */
+  --color-sun-300:   #FFE27A;
+  --color-sun-400:   #FFD23F;   /* CTA kuning, padanan "Shop now" */
+  --color-sun-500:   #F5BC12;
+  --color-coral-100: #FFEDE8;
+  --color-coral-400: #FF6A4D;   /* hanya isian, bukan teks */
+  --color-coral-600: #C73A1E;   /* teks diskon / error */
+  --color-pink-300:  #FFB3C7;   /* stiker & ilustrasi */
+
+  /* Netral bernuansa hijau */
+  --color-ink-900: #0B1F18;
+  --color-ink-700: #2B3F37;
+  --color-ink-500: #5A6B64;     /* teks sekunder terendah yang lolos AA */
+  --color-ink-300: #A9B5B0;     /* dekor/disabled, JANGAN untuk teks */
+  --color-line:    #E3EAE6;
+  --color-canvas:  #F4F7F5;
+  --color-paper:   #FFFFFF;
+
+  /* Status */
+  --color-success: #1A7F4B;
+  --color-info:    #1D6FD8;
+  --color-warning: #8A5A00;
+  --color-danger:  #C73A1E;
+
+  /* Semantik */
+  --color-primary:        var(--color-brand-500);
+  --color-primary-hover:  var(--color-brand-600);
+  --color-on-primary:     #FFFFFF;
+  --color-cta:            var(--color-sun-400);
+  --color-on-cta:         var(--color-ink-900);
+  --color-surface-dark:   var(--color-brand-800);
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-2xl: 40px;
+
+  /* Bayangan lembut (bertinta hijau, bukan abu-abu) */
+  --shadow-card: 0 1px 2px rgb(0 36 27 / 0.06), 0 8px 24px -8px rgb(0 36 27 / 0.12);
+  --shadow-pop:  0 2px 4px rgb(0 36 27 / 0.08), 0 24px 48px -12px rgb(0 36 27 / 0.28);
+  --shadow-product: 0 40px 60px -20px rgb(0 21 16 / 0.45);
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@theme inline {
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Pola anti-kedip GSAP FOUC */
+html.motion-ok [data-hero-word] {
+  transform: translateY(110%);
+}
+html.motion-ok [data-hero-cta],
+html.motion-ok [data-hero-card] {
+  opacity: 0;
+}
