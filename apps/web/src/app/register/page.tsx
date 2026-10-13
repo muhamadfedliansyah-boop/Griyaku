@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   ChevronLeft,
 } from "lucide-react";
+import { registerUser } from "@/lib/api-client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,10 +42,20 @@ export default function RegisterPage() {
       return;
     }
 
-    setIsLoading(true);
-    await new Promise((res) => setTimeout(res, 900));
-    setIsLoading(false);
-    router.push("/login");
+    try {
+      setIsLoading(true);
+      await registerUser({
+        name: email.split("@")[0] || "User Griyaku",
+        email: email.trim(),
+        password,
+        phone,
+      });
+      router.push("/login");
+    } catch (err: any) {
+      setError(err.message || "Gagal mendaftar akun. Silakan coba kembali.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

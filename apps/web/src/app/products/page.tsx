@@ -6,6 +6,8 @@ import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
 import { ProductCard } from "@/components/product/product-card";
 import { INITIAL_PRODUCTS } from "@/lib/products-data";
+import { fetchLiveProducts } from "@/lib/api-client";
+import { ProductItem } from "@/types/ecommerce";
 import { SlidersHorizontal, Check, Star } from "lucide-react";
 
 function ProductsCatalog() {
@@ -13,6 +15,16 @@ function ProductsCatalog() {
   const [selectedCategory, setSelectedCategory] = useState<string>(
     searchParams.get("category") ?? "all"
   );
+  const [products, setProducts] = useState<ProductItem[]>(INITIAL_PRODUCTS);
+
+  // Ambil data live real-time dari PostgreSQL Docker
+  useEffect(() => {
+    fetchLiveProducts().then((liveData) => {
+      if (liveData && liveData.length > 0) {
+        setProducts(liveData);
+      }
+    });
+  }, []);
 
   // Sync filter jika URL query param berubah (navigasi dari halaman lain)
   useEffect(() => {
@@ -25,7 +37,7 @@ function ProductsCatalog() {
   const [minRating, setMinRating] = useState<number>(0);
 
   const filteredProducts = useMemo(() => {
-    return INITIAL_PRODUCTS.filter((item) => {
+    return products.filter((item) => {
       if (selectedCategory !== "all" && item.category.slug !== selectedCategory) {
         return false;
       }

@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   ChevronLeft,
 } from "lucide-react";
+import { loginUser } from "@/lib/api-client";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,10 +35,15 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-    await new Promise((res) => setTimeout(res, 800));
-    setIsLoading(false);
-    router.push("/");
+    try {
+      setIsLoading(true);
+      await loginUser(email, password);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Email atau kata sandi tidak valid.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
