@@ -10,14 +10,8 @@ import {
   Zap,
   Plus,
   Check,
-  ChevronRight,
   ArrowRight,
-  SlidersHorizontal,
-  LayoutGrid,
-  Search,
-  PenTool,
   Smile,
-  Layers,
 } from "lucide-react";
 
 export interface ShowcaseItem {
@@ -197,18 +191,21 @@ export function CategoryStorehouseShowcase() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
   const [isAnimating, setIsAnimating] = useState(false);
+  const [nextImageUrl, setNextImageUrl] = useState<string>("");
 
-  // Refs for GSAP smooth transition
+  // Refs
   const cardContainerRef = useRef<HTMLDivElement>(null);
-  const imageElementRef = useRef<HTMLDivElement>(null);
-  const titleTextRef = useRef<HTMLHeadingElement>(null);
+  const imageZoneRef = useRef<HTMLDivElement>(null);   // zona gambar (float target)
+  const currentImgEl  = useRef<HTMLImageElement>(null); // gambar yang sedang tampil
+  const nextImgEl     = useRef<HTMLImageElement>(null); // gambar yang akan masuk
+  const titleTextRef  = useRef<HTMLHeadingElement>(null);
+  const infoBlockRef  = useRef<HTMLDivElement>(null);
   const blobFloatingRef1 = useRef<HTMLDivElement>(null);
   const blobFloatingRef2 = useRef<HTMLDivElement>(null);
 
   const currentItem =
     SHOWCASE_ITEMS.find((item) => item.id === selectedId) || SHOWCASE_ITEMS[0]!;
 
-  // Filtered items based on bottom category dock
   const displayItems =
     activeCategory === "all"
       ? SHOWCASE_ITEMS
@@ -218,84 +215,130 @@ export function CategoryStorehouseShowcase() {
     if (item.id === selectedId || isAnimating) return;
     setIsAnimating(true);
 
-    // Animasi GSAP keluar & masuk yang sangat halus (Smooth Spring Animation)
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          setIsAnimating(false);
-        },
-      });
+    // Tampilkan gambar berikutnya (tersembunyi di kanan awalnya)
+    setNextImageUrl(item.imageUrl);
 
-      // 1. Animasi gambar dan teks mengecil halus
-      tl.to([imageElementRef.current, titleTextRef.current], {
-        scale: 0.9,
-        y: -15,
-        opacity: 0,
-        duration: 0.22,
-        ease: "power2.in",
-        onComplete: () => {
-          // Ganti state saat gambar memudar
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const cur  = currentImgEl.current;
+        const next = nextImgEl.current;
+
+        if (!cur || !next) {
           setSelectedId(item.id);
-        },
-      })
-        // 2. Animasi masuk memantul lembut (back.out spring)
-        .fromTo(
-          titleTextRef.current,
-          { y: 30, opacity: 0 },
-          { y: 0, opacity: 1, duration: 0.45, ease: "power3.out" },
-          "+=0.05"
-        )
-        .fromTo(
-          imageElementRef.current,
-          { scale: 0.75, y: 35, rotate: -8, opacity: 0 },
-          {
-            scale: 1,
-            y: 0,
-            rotate: 0,
-            opacity: 1,
-            duration: 0.65,
-            ease: "back.out(1.6)",
+          setNextImageUrl("");
+          setIsAnimating(false);
+          return;
+        }
+
+        // Posisi awal gambar baru: jauh di kanan bawah, transparan, kecil
+        gsap.set(next, { x: "140%", y: 60, opacity: 0, scale: 0.75, rotate: 8 });
+
+        const tl = gsap.timeline({
+          defaults: { ease: "power3.inOut" },
+          onComplete: () => {
+            setSelectedId(item.id);
+            setNextImageUrl("");
+            setIsAnimating(false);
+            // Reset transform gambar baru yang kini jadi "current"
+            if (currentImgEl.current) {
+              gsap.set(currentImgEl.current, { clearProps: "all" });
+            }
           },
-          "-=0.35"
-        );
-
-      // 3. Efek gerakan partikel bola melayang (claymorphic floating blobs)
-      if (blobFloatingRef1.current && blobFloatingRef2.current) {
-        gsap.to(blobFloatingRef1.current, {
-          y: "random(-20, 20)",
-          x: "random(-15, 15)",
-          scale: "random(0.9, 1.2)",
-          duration: 0.6,
-          ease: "power2.out",
         });
-        gsap.to(blobFloatingRef2.current, {
-          y: "random(-25, 25)",
-          x: "random(-20, 20)",
-          scale: "random(0.85, 1.15)",
-          duration: 0.7,
-          ease: "power2.out",
-        });
-      }
-    }, cardContainerRef);
 
-    return () => ctx.revert();
+        // EXIT — gambar lama melengkung ke kiri-atas (busur parabola)
+        tl.to(cur, {
+          keyframes: [
+            // Naik ke puncak busur sambil mulai geser kiri
+            { x: "-30%", y: -70, scale: 0.9, opacity: 0.7, duration: 0.28, ease: "power2.out" },
+            // Turun melanjutkan busur dan keluar layar ke kiri
+            { x: "-150%", y: -30, scale: 0.7, opacity: 0, duration: 0.32, ease: "power3.in" },
+          ],
+        })
+          // ENTER — gambar baru melengkung masuk dari kanan-bawah ke tengah
+          .to(
+            next,
+            {
+              keyframes: [
+                // Masuk dari kanan-bawah
+                { x: "60%", y: 30, scale: 0.85, opacity: 0.5, duration: 0.25, ease: "power2.out" },
+                // Mendarat di tengah dengan spring bounce
+                { x: 0, y: 0, scale: 1, opacity: 1, duration: 0.45, ease: "back.out(1.5)" },
+              ],
+            },
+            0.18  // mulai 0.18s setelah exit dimulai (overlap)
+          )
+          // Teks nama berganti dengan fade+slide naik
+          .fromTo(
+            titleTextRef.current,
+            { y: 16, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.38, ease: "power2.out" },
+            0.42
+          )
+          // Harga menyusul
+          .fromTo(
+            infoBlockRef.current,
+            { y: 10, opacity: 0 },
+            { y: 0, opacity: 1, duration: 0.32, ease: "power2.out" },
+            0.52
+          );
+
+        // Blob bereaksi saat transisi
+        if (blobFloatingRef1.current) {
+          gsap.to(blobFloatingRef1.current, {
+            x: "random(-22, 22)", y: "random(-18, 18)",
+            scale: "random(0.88, 1.18)",
+            duration: 0.7, ease: "power2.out",
+          });
+        }
+        if (blobFloatingRef2.current) {
+          gsap.to(blobFloatingRef2.current, {
+            x: "random(-28, 28)", y: "random(-20, 20)",
+            scale: "random(0.82, 1.22)",
+            duration: 0.8, ease: "power2.out",
+          });
+        }
+      });
+    });
   };
 
-  const handleAddToCart = (e: React.MouseEvent, id: string) => {
+  const handleAddToCart = (e: React.MouseEvent, item: ShowcaseItem) => {
     e.stopPropagation();
-    setAddedItems((prev) => ({ ...prev, [id]: true }));
+    
+    // Simpan ke localStorage cart
+    if (typeof window !== "undefined") {
+      const existing = localStorage.getItem("griyaku_cart");
+      const cart: Array<{ id: string; name: string; price: string; imageUrl: string; qty: number }> = 
+        existing ? JSON.parse(existing) : [];
+      
+      const existingIdx = cart.findIndex((c) => c.id === item.id);
+      if (existingIdx >= 0) {
+        cart[existingIdx]!.qty += 1;
+      } else {
+        cart.push({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          imageUrl: item.imageUrl,
+          qty: 1,
+        });
+      }
+      localStorage.setItem("griyaku_cart", JSON.stringify(cart));
+      window.dispatchEvent(new Event("storage"));
+    }
+
+    setAddedItems((prev) => ({ ...prev, [item.id]: true }));
     setTimeout(() => {
-      setAddedItems((prev) => ({ ...prev, [id]: false }));
+      setAddedItems((prev) => ({ ...prev, [item.id]: false }));
     }, 2000);
   };
 
-  // Efek melayang santai (idle floating) untuk produk utama
+  // Efek melayang idle pada zona gambar
   useEffect(() => {
     const ctx = gsap.context(() => {
-      if (imageElementRef.current) {
-        gsap.to(imageElementRef.current, {
-          y: "+=12",
-          rotate: "+=1.5",
+      if (imageZoneRef.current) {
+        gsap.to(imageZoneRef.current, {
+          y: "+=9",
           duration: 2.8,
           ease: "sine.inOut",
           yoyo: true,
@@ -389,27 +432,85 @@ export function CategoryStorehouseShowcase() {
                 </p>
               </div>
 
-              {/* Objek Produk 3D di Tengah Kartu yang Melayang */}
+              {/* ===================================================
+                  AREA GAMBAR — Arc Parabola Animation
+                  Dua <img> absolute di atas zone yang sama.
+                  Gambar lama: terbang keluar ke kiri-atas (busur).
+                  Gambar baru: datang dari kanan-bawah, mendarat halus.
+                  mix-blend-mode:multiply → background foto transparan.
+              ==================================================== */}
               <div className="relative my-auto flex items-center justify-center py-4 z-20">
+                {/* Zone: target idle-float */}
                 <div
-                  ref={imageElementRef}
-                  className="relative w-48 h-48 sm:w-60 sm:h-60 flex items-center justify-center transform cursor-pointer group"
-                  onClick={() => handleSelectProduct(currentItem)}
+                  ref={imageZoneRef}
+                  style={{
+                    position: "relative",
+                    width: "clamp(180px, 22vw, 260px)",
+                    height: "clamp(180px, 22vw, 260px)",
+                    overflow: "visible",   /* biarkan arc keluar zone */
+                  }}
                 >
-                  {/* Bayangan halus di bawah objek produk */}
-                  <div className="absolute -bottom-4 w-40 h-8 bg-black/25 rounded-full blur-xl transform scale-x-110" />
-
-                  {/* Gambar Produk Cutout */}
+                  {/* Gambar AKTIF */}
                   <img
+                    ref={currentImgEl}
                     src={currentItem.imageUrl}
                     alt={currentItem.name}
-                    className="w-full h-full object-contain drop-shadow-2xl filter group-hover:scale-105 transition-transform duration-500 rounded-3xl"
+                    draggable={false}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      mixBlendMode: "multiply",   /* hapus bg putih foto */
+                      filter: "drop-shadow(0 20px 28px rgba(0,0,0,0.35))",
+                      willChange: "transform, opacity",
+                    }}
                   />
+
+                  {/* Gambar BERIKUTNYA — hanya render saat transisi */}
+                  {nextImageUrl && (
+                    <img
+                      ref={nextImgEl}
+                      src={nextImageUrl}
+                      alt="next product"
+                      draggable={false}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "contain",
+                        mixBlendMode: "multiply",
+                        filter: "drop-shadow(0 20px 28px rgba(0,0,0,0.35))",
+                        opacity: 0,
+                        willChange: "transform, opacity",
+                      }}
+                    />
+                  )}
                 </div>
+
+                {/* Shadow elips bawah produk */}
+                <div
+                  className="absolute pointer-events-none"
+                  style={{
+                    bottom: "-4px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "120px",
+                    height: "18px",
+                    background: "rgba(0,0,0,0.22)",
+                    borderRadius: "50%",
+                    filter: "blur(10px)",
+                  }}
+                />
               </div>
 
-              {/* Info Bawah Kartu: Harga & CTA Quick View */}
-              <div className="relative z-20 flex items-center justify-between pt-2">
+              {/* Info Bawah: Harga & CTA */}
+              <div
+                ref={infoBlockRef}
+                className="relative z-20 flex items-center justify-between pt-2"
+              >
                 <div>
                   <span className="text-[11px] text-white/70 block font-medium">Harga Resmi</span>
                   <span className="font-display font-extrabold text-xl sm:text-2xl text-white drop-shadow-xs">
@@ -453,12 +554,37 @@ export function CategoryStorehouseShowcase() {
                 </div>
               </div>
 
-              {/* Header Kolom Tabel */}
+              {/* Header kolom tabel */}
               <div className="grid grid-cols-12 text-[11px] font-bold text-ink-400 uppercase tracking-wider px-4 py-2 select-none">
-                <span className="col-span-5 sm:col-span-5">PRODUCT</span>
-                <span className="col-span-4 sm:col-span-4 text-center sm:text-left">SPESIFIKASI</span>
-                <span className="col-span-2 sm:col-span-2 text-center">PREVIEW</span>
-                <span className="col-span-1 sm:col-span-1 text-right">AKSI</span>
+                <span className="col-span-5">PRODUCT</span>
+                <span className="col-span-4 hidden sm:block text-left">SPESIFIKASI</span>
+                <span className="col-span-5 sm:col-span-2 text-center">PREVIEW</span>
+                <span className="col-span-2 sm:col-span-1 text-right">AKSI</span>
+              </div>
+
+              {/* Filter kategori — pill kecil di atas daftar */}
+              <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3 mt-1">
+                {[
+                  { key: "all", label: "Semua", icon: null },
+                  { key: "perabot", label: "Perabot", icon: <Armchair className="w-3 h-3" /> },
+                  { key: "dapur", label: "Dapur", icon: <UtensilsCrossed className="w-3 h-3" /> },
+                  { key: "elektronik", label: "Elektronik", icon: <Zap className="w-3 h-3" /> },
+                  { key: "kebersihan", label: "Bersih", icon: <Sparkles className="w-3 h-3" /> },
+                ].map(({ key, label, icon }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setActiveCategory(key)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer ${
+                      activeCategory === key
+                        ? "bg-ink-900 text-white shadow-sm"
+                        : "bg-slate-100 hover:bg-slate-200 text-ink-600"
+                    }`}
+                  >
+                    {icon}
+                    {label}
+                  </button>
+                ))}
               </div>
 
               {/* Daftar Barang yang Dapat Dipilih (Interactive List) */}
@@ -524,7 +650,7 @@ export function CategoryStorehouseShowcase() {
                       <div className="col-span-2 sm:col-span-1 flex items-center justify-end">
                         <button
                           type="button"
-                          onClick={(e) => handleAddToCart(e, item.id)}
+                          onClick={(e) => handleAddToCart(e, item)}
                           aria-label={`Tambah ${item.name} ke keranjang`}
                           className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all cursor-pointer ${
                             isAdded
@@ -547,126 +673,7 @@ export function CategoryStorehouseShowcase() {
               </div>
             </div>
 
-            {/* ========================================================= */}
-            {/* DOCK KONTROL BAWAH (SESUAI PERSIS DI FOTO)                */}
-            {/* ========================================================= */}
-            <div className="mt-8 pt-5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
 
-              {/* Bagian Kiri: Kategori Icon Selector Dihubungkan Garis Putus-putus */}
-              <div className="flex items-center gap-2">
-                {/* Icon 1: Sofa / Perabot */}
-                <button
-                  type="button"
-                  onClick={() => setActiveCategory(activeCategory === "perabot" ? "all" : "perabot")}
-                  aria-label="Filter kategori Perabot"
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                    activeCategory === "perabot"
-                      ? "bg-amber-400 text-ink-900 shadow-md scale-105"
-                      : "bg-slate-100 hover:bg-slate-200 text-ink-600"
-                  }`}
-                  title="Perabot & Ruang"
-                >
-                  <Armchair className="w-4 h-4" />
-                </button>
-
-                <span className="w-3 h-0.5 bg-slate-300 rounded-full" />
-
-                {/* Icon 2: Dapur / Utensils */}
-                <button
-                  type="button"
-                  onClick={() => setActiveCategory(activeCategory === "dapur" ? "all" : "dapur")}
-                  aria-label="Filter kategori Dapur"
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                    activeCategory === "dapur"
-                      ? "bg-brand-500 text-white shadow-md scale-105"
-                      : "bg-slate-100 hover:bg-slate-200 text-ink-600"
-                  }`}
-                  title="Dapur & Masak"
-                >
-                  <UtensilsCrossed className="w-4 h-4" />
-                </button>
-
-                <span className="w-3 h-0.5 bg-slate-300 rounded-full" />
-
-                {/* Icon 3: Elektronik / Zap */}
-                <button
-                  type="button"
-                  onClick={() => setActiveCategory(activeCategory === "elektronik" ? "all" : "elektronik")}
-                  aria-label="Filter kategori Elektronik"
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                    activeCategory === "elektronik"
-                      ? "bg-blue-500 text-white shadow-md scale-105"
-                      : "bg-slate-100 hover:bg-slate-200 text-ink-600"
-                  }`}
-                  title="Elektronik Cerdas"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
-
-                <span className="w-3 h-0.5 bg-slate-300 rounded-full" />
-
-                {/* Icon 4: Kebersihan / Sparkles */}
-                <button
-                  type="button"
-                  onClick={() => setActiveCategory(activeCategory === "kebersihan" ? "all" : "kebersihan")}
-                  aria-label="Filter kategori Kebersihan"
-                  className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
-                    activeCategory === "kebersihan"
-                      ? "bg-teal-500 text-white shadow-md scale-105"
-                      : "bg-slate-100 hover:bg-slate-200 text-ink-600"
-                  }`}
-                  title="Alat Kebersihan"
-                >
-                  <Sparkles className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Bagian Tengah: Floating Capsule Dock Persis di Foto */}
-              <div className="bg-white rounded-full shadow-lg border border-slate-200/70 px-3 py-1.5 flex items-center gap-3">
-                <button
-                  type="button"
-                  aria-label="Cari barang"
-                  className="p-1.5 text-ink-400 hover:text-ink-800 transition-colors"
-                >
-                  <Search className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Ubah tema"
-                  className="p-1.5 text-purple-500 hover:text-purple-700 transition-colors"
-                >
-                  <PenTool className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Filter opsi"
-                  className="p-1.5 text-ink-500 hover:text-ink-800 transition-colors"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                </button>
-
-                <div className="w-px h-5 bg-slate-200 mx-0.5" />
-
-                {/* Tombol Panah Hitam Bulat [→] Sesuai Foto */}
-                <Link
-                  href={`/products?category=${currentItem.productSlug}`}
-                  aria-label="Buka produk terpilih"
-                  className="w-8 h-8 rounded-full bg-ink-900 hover:bg-brand-600 text-white flex items-center justify-center transition-all active:scale-95 shadow-md"
-                >
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-
-              {/* Bagian Kanan: Layout Grid View Icon */}
-              <Link
-                href="/products"
-                aria-label="Buka katalog lengkap"
-                className="w-9 h-9 rounded-2xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-ink-600 transition-colors"
-                title="Lihat semua produk"
-              >
-                <LayoutGrid className="w-4 h-4" />
-              </Link>
-            </div>
           </div>
 
         </div>

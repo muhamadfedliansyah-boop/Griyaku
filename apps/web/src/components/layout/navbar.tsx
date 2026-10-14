@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, ShoppingCart, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/api-client";
 
 interface NavbarProps {
   cartCount?: number;
@@ -11,6 +12,14 @@ interface NavbarProps {
 
 export function Navbar({ cartCount = 3 }: NavbarProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+    const handleStorage = () => setUser(getCurrentUser());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 w-full bg-paper/95 backdrop-blur-md border-b border-line shadow-xs">
@@ -72,9 +81,9 @@ export function Navbar({ cartCount = 3 }: NavbarProps) {
             )}
           </Link>
 
-          {/* User Login Button */}
-          <Button href="/login" variant="primary" className="text-xs sm:text-sm py-2 px-4 sm:px-5">
-            Masuk
+          {/* User Login / Profile Button */}
+          <Button href={user ? "/profile" : "/login"} variant="primary" className="text-xs sm:text-sm py-2 px-4 sm:px-5">
+            {user ? user.name : "Masuk"}
           </Button>
         </div>
       </div>

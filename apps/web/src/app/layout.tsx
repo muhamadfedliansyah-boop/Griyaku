@@ -25,6 +25,9 @@ export default function RootLayout({
               try {
                 if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
                   document.documentElement.classList.add("motion-ok");
+                  setTimeout(function() {
+                    document.documentElement.classList.remove("motion-ok");
+                  }, 500);
                 }
               } catch (_) {}
             `,

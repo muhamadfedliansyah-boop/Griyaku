@@ -1,13 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { RoundBadge } from "@/components/ui/badge";
 import { HeroMotion } from "@/components/home/hero-motion";
 import { CategoryStorehouseShowcase } from "@/components/home/storehouse-showcase";
+import { SpotlightDock } from "@/components/home/spotlight-dock";
 import { Footer } from "@/components/layout/footer";
 import { INITIAL_PRODUCTS, formatRupiah } from "@/lib/products-data";
+import { getCurrentUser } from "@/lib/api-client";
 import { 
   Star, Search, ShoppingCart, Truck, ShieldCheck, 
   Sparkles, CheckCircle2, ChevronRight, Home, 
@@ -18,6 +20,14 @@ import {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState("all");
+  const [user, setUser] = useState<{ id: number; name: string; email: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+    const handleStorage = () => setUser(getCurrentUser());
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   const bestSellers = INITIAL_PRODUCTS.slice(0, 5);
   const kitchenDeals = [
@@ -74,11 +84,11 @@ export default function HomePage() {
                 <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-coral-400 rounded-full" />
               </Link>
               <Button
-                href="/login"
+                href={user ? "/profile" : "/login"}
                 variant="outline"
                 className="inline-flex text-xs py-1.5 px-4 sm:py-2 sm:px-5 font-bold border-white/70 hover:bg-white hover:text-brand-600 transition-all"
               >
-                Masuk
+                {user ? user.name : "Masuk"}
               </Button>
             </div>
           </header>
@@ -103,51 +113,29 @@ export default function HomePage() {
                 <div data-hero-float>
                   <div
                     data-hero-tilt
-                    className="relative -rotate-[16deg] w-60 h-60 md:w-72 md:h-72 lg:w-80 lg:h-80 flex items-center justify-center"
+                    className="relative -rotate-[12deg] w-52 h-52 md:w-64 md:h-64 lg:w-72 lg:h-72 flex items-center justify-center"
                   >
-                    <div className="relative w-44 h-52 md:w-56 md:h-64 bg-gradient-to-tr from-mint-300 via-paper to-white rounded-3xl shadow-product flex flex-col items-center justify-center border-4 border-white/80 p-6 pointer-events-auto">
-                      <Flame className="w-14 h-14 text-brand-600 mb-2 stroke-[1.5]" />
-                      <span className="font-display font-bold text-ink-900 text-base md:text-lg">
-                        Air Fryer Eco
-                      </span>
-                      <span className="text-xs text-brand-600 font-semibold bg-brand-50 px-2 py-0.5 rounded-full mt-1">
-                        Garansi Resmi 1 Tahun
-                      </span>
-                    </div>
+                    {/* Kursi Cutout Transparan Tanpa Background */}
+                    <img
+                      src="/chair.png"
+                      alt="Kursi Santai Pilihan"
+                      className="relative w-44 h-auto md:w-56 lg:w-64 object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.4)] pointer-events-auto select-none"
+                      draggable={false}
+                    />
 
-                    {/* Shadow elips di bawah kartu produk */}
+                    {/* Shadow elips di bawah kursi */}
                     <div
                       data-hero-shadow
-                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-32 h-4 bg-black/30 rounded-full blur-md"
+                      className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-36 h-3.5 bg-black/40 rounded-full blur-md"
                     />
 
                     <div
                       data-hero-badge
-                      className="absolute -top-3 -right-3 rotate-[12deg] pointer-events-auto"
+                      className="absolute top-2 -right-2 rotate-[12deg] pointer-events-auto"
                     >
                       <RoundBadge text="Garansi Resmi" />
                     </div>
                   </div>
-                </div>
-
-                {/* Kartu stat kiri */}
-                <div
-                  data-hero-card
-                  className="absolute -left-24 top-1/2 -translate-y-1/2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-3 py-2 text-white pointer-events-none hidden md:flex flex-col items-center gap-0.5 min-w-[80px]"
-                >
-                  <ShieldCheck className="w-5 h-5 text-sun-300" />
-                  <span className="text-[11px] font-bold leading-tight">Resmi</span>
-                  <span className="text-[9px] text-white/70">100% Garansi</span>
-                </div>
-
-                {/* Kartu stat kanan */}
-                <div
-                  data-hero-card
-                  className="absolute -right-24 top-1/2 -translate-y-1/2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl px-3 py-2 text-white pointer-events-none hidden md:flex flex-col items-center gap-0.5 min-w-[80px]"
-                >
-                  <Truck className="w-5 h-5 text-sun-300" />
-                  <span className="text-[11px] font-bold leading-tight">Gratis</span>
-                  <span className="text-[9px] text-white/70">Ongkir Nasional</span>
                 </div>
               </div>
             </div>
@@ -176,46 +164,8 @@ export default function HomePage() {
       {/* 2. BAGIAN BAWAH: SESUAI PERSIS DESAIN REFERENSI GAMBAR   */}
       {/* ========================================================= */}
 
-      {/* A. QUICK SHORTCUT / USER STRIP */}
-      <section className="bg-paper border-b border-line py-3 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 overflow-x-auto scrollbar-none text-xs">
-          
-          <div className="flex items-center gap-2.5 shrink-0 bg-canvas px-3.5 py-2 rounded-full border border-line">
-            <div className="w-6 h-6 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-[10px]">
-              B
-            </div>
-            <div>
-              <p className="font-semibold text-ink-900 leading-tight">Halo, Budi Santoso</p>
-              <p className="text-[10px] text-ink-500">Kirim ke Depok, Jawa Barat</p>
-            </div>
-          </div>
-
-          <Link href="/cart" className="flex items-center gap-2 shrink-0 px-3.5 py-2 rounded-full hover:bg-canvas border border-transparent hover:border-line transition-colors">
-            <Package className="w-4 h-4 text-brand-600" />
-            <span className="font-semibold text-ink-800">Pesanan Saya</span>
-          </Link>
-
-          <Link href="/products?category=elektronik-rumah" className="flex items-center gap-2 shrink-0 px-3.5 py-2 rounded-full hover:bg-canvas border border-transparent hover:border-line transition-colors">
-            <Zap className="w-4 h-4 text-amber-500" />
-            <span className="font-semibold text-ink-800">Elektronik Rumah</span>
-          </Link>
-
-          <Link href="/products?category=dapur-memasak" className="flex items-center gap-2 shrink-0 px-3.5 py-2 rounded-full hover:bg-canvas border border-transparent hover:border-line transition-colors">
-            <Utensils className="w-4 h-4 text-brand-600" />
-            <span className="font-semibold text-ink-800">Dapur & Masak</span>
-          </Link>
-
-          <Link href="/products?category=kebersihan-rumah" className="flex items-center gap-2 shrink-0 px-3.5 py-2 rounded-full hover:bg-canvas border border-transparent hover:border-line transition-colors">
-            <Sparkles className="w-4 h-4 text-teal-600" />
-            <span className="font-semibold text-ink-800">Alat Kebersihan</span>
-          </Link>
-
-          <Link href="/products" className="flex items-center gap-2 shrink-0 px-3.5 py-2 rounded-full bg-sun-50 border border-sun-200 text-ink-900 font-bold">
-            <Flame className="w-4 h-4 text-coral-500" />
-            <span>Flash Deal</span>
-          </Link>
-        </div>
-      </section>
+      {/* A. FLOATING SPOTLIGHT DOCK (SESUAI FOTO DOCK DENGAN EFEK LAMPU SOROT MENGIKUTI KURSOR) */}
+      <SpotlightDock />
 
       {/* B. PEMILIHAN KATEGORI ALAT RUMAH TANGGA: 3D CLAY INTERACTIVE STOREHOUSE (SESUAI FOTO) */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
@@ -625,9 +575,9 @@ export default function HomePage() {
           <Package className="w-5 h-5" />
           <span className="text-[10px] font-semibold">Pesanan</span>
         </Link>
-        <Link href="/login" className="flex flex-col items-center gap-1 text-ink-500 hover:text-brand-500">
+        <Link href={user ? "/profile" : "/login"} className="flex flex-col items-center gap-1 text-ink-500 hover:text-brand-500">
           <User className="w-5 h-5" />
-          <span className="text-[10px] font-semibold">Masuk</span>
+          <span className="text-[10px] font-semibold">{user ? user.name : "Masuk"}</span>
         </Link>
       </div>
 
